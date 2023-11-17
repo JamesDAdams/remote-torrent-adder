@@ -1,4 +1,6 @@
 RTA.clients.qBittorrentV2Adder = function(server, data, torrentname, label, dir) {
+	console.log('COUCOU');
+	console.log('server:: ', server);
 	var rootUrl = (server.hostsecure ? "https" : "http") + "://" + server.host + ":" + server.port;
 
 	// execute login request
@@ -30,8 +32,16 @@ RTA.clients.qBittorrentV2Adder = function(server, data, torrentname, label, dir)
 				message.append("savepath", dir);
 			}
 
-			if(label) {
-				message.append("category", label);
+			if(server.tags) {
+				message.append("tags", server.tags);
+			}
+
+			if(server.category) {
+				message.append("category", server.category);
+			}
+
+			if(server.forcestart) {
+				message.append("paused", false);
 			}
 
 			// add the torrent

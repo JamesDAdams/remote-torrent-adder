@@ -9,6 +9,9 @@ if(localStorage.getItem("servers") == undefined) {
 	   localStorage.getItem("port") != undefined &&
 	   localStorage.getItem("login") != undefined &&
 	   localStorage.getItem("password") != undefined &&
+	   localStorage.getItem("category") != undefined &&
+	   localStorage.getItem("forcestart") != undefined &&
+	   localStorage.getItem("tags") != undefined &&
 	   localStorage.getItem("client") != undefined) {
 		servers.push({
 			"name": "primary host",
@@ -16,6 +19,9 @@ if(localStorage.getItem("servers") == undefined) {
 			"port": parseInt(localStorage.getItem("port")),
 			"hostsecure": localStorage.getItem("hostsecure") === "true",
 			"login": localStorage.getItem("login"),
+			"category": localStorage.getItem("category"),
+			"forcestart": localStorage.getItem("forcestart"),
+			"tags": localStorage.getItem("tags"),
 			"password": localStorage.getItem("password")
 		});
 	} else { // otherwise, use standard values
@@ -26,6 +32,9 @@ if(localStorage.getItem("servers") == undefined) {
 			"hostsecure": "",
 			"login": "login",
 			"password": "password",
+			"forcestart": "forcestart",
+			"tags": "tags",
+			"category": "category",
 			"client": "Vuze SwingUI"
 		});
 		localStorage.setItem("linksfoundindicator", "true");
@@ -91,7 +100,7 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
 		registerReferrerHeaderListeners();
 	} else if(request.action == "registerAuthenticationListeners") {
 		registerAuthenticationListeners();
-	} 
+	}
 });
 
 ///////////////////////////////////////////////////////////////////
@@ -103,13 +112,13 @@ function registerReferrerHeaderListeners() {
 	while(listeners.length > 0) {
 		chrome.webRequest.onBeforeSendHeaders.removeListener(listeners.pop());
 	}
-	
+
 	// register new listeners
 	var servers = JSON.parse(localStorage.getItem("servers"));
 	for(var i in servers) {
 		var server = servers[i];
 		const url = "http" + (server.hostsecure ? "s" : "") + "://" + server.host + ":" + server.port + "/";
-		
+
 		const listener = (function(arg) {
 			const myUrl = arg;
 
@@ -121,21 +130,21 @@ function registerReferrerHeaderListeners() {
 						foundReferer = true;
 						details.requestHeaders[j].value = myUrl;
 					}
-					
+
 					if (details.requestHeaders[j].name === 'Origin') {
 						foundOrigin = true;
 						details.requestHeaders[j].value = myUrl;
 					}
-					
+
 					if(foundReferer && foundOrigin) {
 						break;
 					}
 				}
-				
+
 				if(!foundReferer) {
 					details.requestHeaders.push({'name': 'Referer', 'value': myUrl});
 				}
-				
+
 				if(!foundOrigin) {
 					details.requestHeaders.push({'name': 'Origin', 'value': myUrl});
 				}
@@ -143,11 +152,11 @@ function registerReferrerHeaderListeners() {
 				return {requestHeaders: details.requestHeaders};
 			};
 		})(url);
-		
+
 		if(server.host && server.port) {
 			chrome.webRequest.onBeforeSendHeaders.addListener(listener, {urls: [ url + "*" ]}, ["blocking", "requestHeaders", "extraHeaders"]);
 		}
-		
+
 		listeners.push(listener);
 	}
 }
@@ -161,7 +170,7 @@ RTA.getTorrentLink = "";
 RTA.getTorrentLinkReferer = "";
 const headersListener = function(details) {
 	var output = { };
-	
+
 	if(details.url == RTA.getTorrentLink) {
 		var foundReferer = false;
 		var foundOrigin = false;
@@ -170,21 +179,21 @@ const headersListener = function(details) {
 				foundReferer = true;
 				details.requestHeaders[j].value = RTA.getTorrentLinkReferer || details.url;
 			}
-			
+
 			if (details.requestHeaders[j].name === 'Origin') {
 				foundOrigin = true;
 				details.requestHeaders[j].value = RTA.getTorrentLinkReferer || details.url;
 			}
-			
+
 			if(foundReferer && foundOrigin) {
 				break;
 			}
 		}
-		
+
 		if(!foundReferer) {
 			details.requestHeaders.push({'name': 'Referer', 'value': RTA.getTorrentLinkReferer || details.url});
 		}
-		
+
 		if(!foundOrigin) {
 			details.requestHeaders.push({'name': 'Origin', 'value': RTA.getTorrentLinkReferer || details.url});
 		}
@@ -211,17 +220,17 @@ function registerAuthenticationListeners() {
 	while(onAuthListeners.length > 0) {
 		chrome.webRequest.onAuthRequired.removeListener(onAuthListeners.pop());
 	}
-	
+
 	// register new listeners
 	var servers = JSON.parse(localStorage.getItem("servers"));
 	for(var i in servers) {
 		var server = servers[i];
 		const url = "http" + (server.hostsecure ? "s" : "") + "://" + server.host + ":" + server.port + "/";
-		
+
 		const listener = (function(user, pass, url) {
 			return function(details) {
 				var authStuff;
-				
+
 				if(triedRequestIds.has(details.requestId)) {
 					authStuff = {  }; // cause the browser to resume default behavior
 					triedRequestIds.delete(details.requestId);
@@ -231,15 +240,15 @@ function registerAuthenticationListeners() {
 					authStuff = { authCredentials: { username: user, password: pass } };
 					triedRequestIds.add(details.requestId);
 				}
-				
+
 				return authStuff;
 			};
 		})(server.login, server.password, url);
-		
+
 		if(server.host && server.port) {
 			chrome.webRequest.onAuthRequired.addListener(listener, { urls: [ url + "*" ], tabId: -1 }, ["blocking"]);
 		}
-		
+
 		onAuthListeners.push(listener);
 	}
 }

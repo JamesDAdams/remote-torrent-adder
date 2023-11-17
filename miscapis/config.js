@@ -13,7 +13,7 @@ RTA.clients.config.getConfig = function(client, name) {
 		"qBittorrent v4.1+ WebUI" : RTA.clients.config.qbittorrentv2,
 		"rTorrent XML-RPC" : RTA.clients.config.rtorrentxmlrpc
 	};
-	
+
 	var config = "<table>" + RTA.clients.config.generalsettings.replace(/\{clienttype\}/g, client).replace(/\{name\}/g, name);
 
 	if(clientMap.hasOwnProperty(client))
@@ -267,9 +267,17 @@ RTA.clients.config.qbittorrent = multiline(function(){/*
 RTA.clients.config.qbittorrentv2 = multiline(function(){/*
 			<tbody name="qbittorrentv2specifics" class="specifics">
 				<tr>
-					<td><span class="title">Label/Directory<br/>interactivity</span></td>
-					<td><input type="checkbox" name="qbittorrentv2dirlabelask" /><br />
-						<span class="tip">Enable this to always ask for a label/directory combination upon adding torrents.</span></td>
+					<td><span class="title">Category</span></td>
+					<td><input type="text" name="category" /><br />
+				</tr>
+				<tr>
+					<td><span class="title">tags</span></td>
+					<td><input type="text" name="tags" /><br />
+				</tr>
+				<tr>
+					<td><span class="title">Force start</span></td>
+					<td><input type="checkbox" name="forcestart" /><br />
+						<span class="tip">Force start torrent when is added</span></td>
 				</tr>
 			</tbody>
 			*/});
